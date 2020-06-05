@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Read It For Me</string>
+    <string name="preview">Preview</string>
+    <string name="capture">Capture</string>
+    <string name="detect">Detect</string>
+    <string name="speak">Speak</string>
+</resources>
