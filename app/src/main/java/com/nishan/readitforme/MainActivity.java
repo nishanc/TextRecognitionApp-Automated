@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -25,6 +26,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.speech.tts.TextToSpeech;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Rational;
 import android.util.Size;
@@ -58,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private String[] REQUIRED_PERMISSIONS = new String[] {Manifest.permission.CAMERA};
     private TextureView viewFinder;
     private ImageView previewImage;
-    private Button detectTextButton, convertToSpeech;
+    private Button detectTextButton, convertToSpeech, captureButton;
     private TextView textView;
     private TextToSpeech textToSpeech;
     private Bitmap imageBitmap;
@@ -74,7 +77,12 @@ public class MainActivity extends AppCompatActivity {
         previewImage = findViewById(R.id.previewImage);
         detectTextButton = findViewById(R.id.detect_button);
         convertToSpeech = findViewById(R.id.speak_button);
+        captureButton = findViewById(R.id.capture_button);
         textView = findViewById(R.id.textView);
+
+        detectTextButton.setVisibility(View.GONE);
+        convertToSpeech.setVisibility(View.GONE);
+        captureButton.setVisibility(View.GONE);
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -114,16 +122,74 @@ public class MainActivity extends AppCompatActivity {
         convertToSpeech.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String textToConvert = textView.getText().toString();
-                int speech;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    speech = textToSpeech.speak(textToConvert,TextToSpeech.QUEUE_FLUSH,null,null);
-                } else {
-                    speech = textToSpeech.speak(textToConvert, TextToSpeech.QUEUE_FLUSH, null);
-                }
+                speakText(textView.getText().toString(), 1);
+            }
+        });
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                captureButton.performClick();
+                speakText("Image captured", 0);
+            }
+        }, 5000);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                detectTextButton.performClick();
+                speakText("Detecting", 0);
+            }
+        }, 10000);
+
+        textView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        convertToSpeech.performClick();
+                    }
+                }, 1000);
             }
         });
     }
+
+    @SuppressLint("ObsoleteSdkInt")
+    private void exitApp() {
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.JELLY_BEAN && Build.VERSION.SDK_INT<Build.VERSION_CODES.LOLLIPOP){
+            finishAffinity();
+        } else if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP){
+            finishAndRemoveTask();
+        }
+    }
+
+    private void speakText(String text, int who) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if(who == 1){
+                textToSpeech.speak("The image says "+ "\n"+text,TextToSpeech.QUEUE_FLUSH,null,null);
+                exitApp();
+            }
+            else{
+                textToSpeech.speak(text,TextToSpeech.QUEUE_FLUSH,null,null);
+            }
+        } else {
+            if(who == 1){
+                textToSpeech.speak("The image says "+ "\n"+text,TextToSpeech.QUEUE_FLUSH,null);
+                exitApp();
+            }
+            else{
+                textToSpeech.speak(text,TextToSpeech.QUEUE_FLUSH,null);
+            }
+        }
+    }
+
 
     private void detectTextFromImage() {
         FirebaseVisionImage firebaseVisionImage = FirebaseVisionImage.fromBitmap(imageBitmap);
@@ -195,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
             ImageCapture imageCapture = new ImageCapture(imageCaptureConfig);
 
 
-            findViewById(R.id.capture_button).setOnClickListener(view -> {
+            captureButton.setOnClickListener(view -> {
                 File file = new File(getExternalMediaDirs()[0], System.currentTimeMillis() + ".jpg");
                 imageCapture.takePicture(file, new ImageCapture.OnImageSavedListener(){
 
@@ -242,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
             // Bind use cases to lifecycle
             CameraX.bindToLifecycle((LifecycleOwner) MainActivity.this, preview, imageCapture,
                     analyzerUseCase);
-            preview.enableTorch(true);
+//            preview.enableTorch(true);
         }
     };
 
