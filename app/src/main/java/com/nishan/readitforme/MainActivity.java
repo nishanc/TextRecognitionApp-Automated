@@ -242,7 +242,9 @@ public class MainActivity extends AppCompatActivity {
             // Bind use cases to lifecycle
             CameraX.bindToLifecycle((LifecycleOwner) MainActivity.this, preview, imageCapture,
                     analyzerUseCase);
-            preview.enableTorch(true);
+
+            //uncomment if you want to turn on the torch
+            //preview.enableTorch(true);
         }
     };
 
