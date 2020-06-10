@@ -7,5 +7,8 @@ ReadItForMe
 
 Use branch `master` for UI controls and branch `automated-exec` for automated UI.
 
+Uncomment `preview.enableTorch(true);` to enable flasher.
+
+
 ![](versions.png)
 
